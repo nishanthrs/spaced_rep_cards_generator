@@ -1,4 +1,4 @@
-# Spaced Repetition Card Auto-Generator
+# Spaced Repetition Card Generator
 
 I consume so much valuable information daily, but I find it frustrating that I can never remember or recall any of it. For the most important content, I should build and use spaced repetition to actually retain it (see [here](https://gwern.net/spaced-repetition) and [here](https://www.dwarkesh.com/p/andy-matuschak) for reasons why). Who knows, I might do something with that information one day.
 
