@@ -675,9 +675,9 @@ def main():
         # Uber Engineering Blog
         # "https://www.uber.com/blog/blazing-fast-olap-on-ubers-inventory-and-catalog-data-with-apache-pinot/?uclick_id=be28212b-50e6-43e0-a804-0a9cdd266ea6",
         # Jane Street Blog
-        # "https://blog.janestreet.com/visualizing-piecewise-linear-neural-networks/",
+        "https://blog.janestreet.com/visualizing-piecewise-linear-neural-networks/",
         # Pinterest Engineering (Medium)
-        "https://medium.com/pinterest-engineering/web-performance-regression-detection-part-2-of-3-9e0b9d35a11f",
+        # "https://medium.com/pinterest-engineering/web-performance-regression-detection-part-2-of-3-9e0b9d35a11f",
     ]
 
     # Scrape all URLs
