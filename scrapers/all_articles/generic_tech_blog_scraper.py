@@ -226,87 +226,6 @@ class JaneStreetBlogExtractor(BaseExtractor):
         return data
 
 
-class MediumBlogExtractor(BaseExtractor):
-    """
-    Extractor for Medium-hosted blogs (like Pinterest Engineering).
-
-    Medium has a very specific structure that we can leverage.
-    Medium uses a lot of JavaScript rendering, but the HTML still
-    contains the content in a parseable format.
-    """
-
-    def can_handle(self, url: str) -> bool:
-        """Check if URL is from Medium."""
-        return "medium.com" in url.lower()
-
-    def extract(self, url: str, soup: BeautifulSoup, html: str) -> Dict:
-        """Extract content from Medium posts."""
-        data = {"url": url, "domain": "medium.com", "extractor": "MediumBlogExtractor"}
-
-        # Medium uses h1 with specific classes for titles
-        title_tag = soup.find("h1")
-        if title_tag:
-            data["title"] = title_tag.get_text(strip=True)
-
-        # Medium stores a lot of metadata in meta tags
-        og_title = soup.find("meta", property="og:title")
-        if og_title and not data.get("title"):
-            data["title"] = og_title.get("content", "")
-
-        # Extract author
-        author_tag = soup.find("meta", attrs={"name": "author"})
-        if author_tag:
-            data["author"] = author_tag.get("content", "")
-
-        # Medium articles are in <article> tags
-        article = soup.find("article")
-
-        if article:
-            content_blocks = []
-
-            # Medium uses section tags for content sections
-            for section in article.find_all("section"):
-                # Within sections, find all paragraphs and headings
-                for elem in section.find_all(
-                    ["h1", "h2", "h3", "h4", "p", "li", "blockquote", "pre", "code"]
-                ):
-                    text = elem.get_text(strip=True)
-                    if not text or len(text) < 10:
-                        continue
-
-                    # Skip if this is the title again
-                    if data.get("title") and text == data["title"]:
-                        continue
-
-                    content_blocks.append({"type": elem.name, "text": text})
-
-            data["content"] = content_blocks
-
-            # Extract images - Medium uses figure tags
-            images = []
-            for figure in article.find_all("figure"):
-                img = figure.find("img")
-                if img:
-                    img_url = img.get("src") or img.get("data-src")
-                    if img_url:
-                        # Get caption from figcaption
-                        caption = ""
-                        figcaption = figure.find("figcaption")
-                        if figcaption:
-                            caption = figcaption.get_text(strip=True)
-
-                        images.append(
-                            {
-                                "url": img_url,
-                                "alt": img.get("alt", ""),
-                                "caption": caption,
-                            }
-                        )
-            data["images"] = images
-
-        return data
-
-
 class GenericExtractor(BaseExtractor):
     """
     Fallback extractor that uses heuristics and third-party libraries.
@@ -460,7 +379,6 @@ class UniversalTechBlogScraper:
         self.extractors = [
             UberBlogExtractor(),
             JaneStreetBlogExtractor(),
-            MediumBlogExtractor(),
             GenericExtractor(),  # Always last (fallback)
         ]
 
@@ -673,11 +591,9 @@ def main():
     # List of blog posts to scrape
     urls = [
         # Uber Engineering Blog
-        # "https://www.uber.com/blog/blazing-fast-olap-on-ubers-inventory-and-catalog-data-with-apache-pinot/?uclick_id=be28212b-50e6-43e0-a804-0a9cdd266ea6",
+        "https://www.uber.com/blog/blazing-fast-olap-on-ubers-inventory-and-catalog-data-with-apache-pinot/?uclick_id=be28212b-50e6-43e0-a804-0a9cdd266ea6",
         # Jane Street Blog
         "https://blog.janestreet.com/visualizing-piecewise-linear-neural-networks/",
-        # Pinterest Engineering (Medium)
-        # "https://medium.com/pinterest-engineering/web-performance-regression-detection-part-2-of-3-9e0b9d35a11f",
     ]
 
     # Scrape all URLs
