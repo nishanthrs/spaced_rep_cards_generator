@@ -17,6 +17,9 @@ See `SCRAPER_COMPARISON.md` for detailed comparison.
 ### Quick Start
 
 ```bash
+# Create and activate virtual environment (better in isolating dependencies from rest of system)
+python3 -m venv .venv
+source .venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
