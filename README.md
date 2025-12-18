@@ -36,14 +36,28 @@ python semianalysis_scraper.py
 
 
 ## TODO:
-- [x] Write some scaffolding for the Mochi API so that it can read and generate new spaced repetition cards and put them in my account right away
-- [ ] Write prompt to generate spaced repetition cards.
-- [x] Scrape data from website so that tool can read data from the sources.
+- [x] [P0] Write some scaffolding for the Mochi API so that it can read and generate new spaced repetition cards and put them in my account right away
+- [x] [P0] Write prompt to generate spaced repetition cards.
+- [x] [P0] Scrape data from website so that tool can read data from the sources.
   - [x] Semianalysis articles (semianalysis_scraper.py)
   - [x] Random tech blogs (generic_tech_blog_scraper.py - hybrid approach with domain-specific extractors)
 - [ ] Use LLM (Claude or Qwen3) to generate spaced repetition cards.
-  - [ ] First have the tool generate the output.
-  - [ ] After the data is verified, confirm that it can generate the spaced repetition cards in your Mochi account to the appropriate deck.
+  - [x] [P0] First have the tool generate the output.
+  - [ ] [P0] Optimize LLM inference on Mac M4 (takes way too long right now; one run at ~20 mins; impossible to test)
+  - [ ] [P0] After the data is verified, confirm that it can generate the spaced repetition cards in your Mochi account to the appropriate deck
+  - [ ] [P1] Deploy on GPU worker for faster token generation
 - [ ] Gradually expand sources of data to all your sources of consumption:
-  - [ ] Books (epub downloads)
-  - [ ] YT videos (yt-dlp)
+  - [ ] [P0] YT videos (yt-dlp)
+  - [ ] [P1] Books (epub downloads)
+- [ ] [P1] See if you can structure the code into a generic data pipeline (e.g. Airflow)
+  - [ ] Step 1: input: link (article, tech blog, YT video); output: text content of link in markdown format
+  - [ ] Step 2: input: prompt, markdown content; output: spaced repetition card candidates
+  - [ ] Step 3: input: selected spaced repetition cards; output: mochi cards
+- [ ] [P2] Productize this tool to see if anyone would use it
+  - [ ] Deploy on web server as API
+  - [ ] Build a web app interface (Next.JS with Tailwind)
+  - [ ] Build a chrome/firefox extension
+  - [ ] Look into increasing performance of tool (latency first, then throughput)
+    - [ ] Run load tests
+    - [ ] Write web server logic in Rust or Go
+    *NOTE: Not expecting this tool to achieve significant scale or anything like that; this is purely out of curiosity and fun*
