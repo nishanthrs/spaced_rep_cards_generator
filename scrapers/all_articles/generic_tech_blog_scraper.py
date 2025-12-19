@@ -591,9 +591,10 @@ def main():
     # List of blog posts to scrape
     urls = [
         # Uber Engineering Blog
-        "https://www.uber.com/blog/blazing-fast-olap-on-ubers-inventory-and-catalog-data-with-apache-pinot/?uclick_id=be28212b-50e6-43e0-a804-0a9cdd266ea6",
+        # "https://www.uber.com/blog/blazing-fast-olap-on-ubers-inventory-and-catalog-data-with-apache-pinot/?uclick_id=be28212b-50e6-43e0-a804-0a9cdd266ea6",
         # Jane Street Blog
-        "https://blog.janestreet.com/visualizing-piecewise-linear-neural-networks/",
+        # "https://blog.janestreet.com/visualizing-piecewise-linear-neural-networks/",
+        "https://mmc.vc/research/state-of-agentic-ai-founders-edition/",
     ]
 
     # Scrape all URLs

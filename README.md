@@ -43,7 +43,7 @@ python semianalysis_scraper.py
   - [x] Random tech blogs (generic_tech_blog_scraper.py - hybrid approach with domain-specific extractors)
 - [ ] Use LLM (Claude or Qwen3) to generate spaced repetition cards.
   - [x] [P0] First have the tool generate the output.
-  - [ ] [P0] Optimize LLM inference on Mac M4 (takes way too long right now; one run at ~20 mins; impossible to test)
+  - [x] [P0] Optimize LLM inference on Mac M4 (takes way too long right now; one run at ~20 mins; impossible to test)
   - [ ] [P0] After the data is verified, confirm that it can generate the spaced repetition cards in your Mochi account to the appropriate deck
   - [ ] [P1] Deploy on GPU worker for faster token generation
 - [ ] Gradually expand sources of data to all your sources of consumption:

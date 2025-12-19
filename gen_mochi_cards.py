@@ -1,14 +1,21 @@
 import os
+from base64 import b64encode
+
+import requests
 
 import torch
 from mlx_lm import generate, load, stream_generate
 from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer
 
+CARD_DELIMITER = "---"
 # Inspired by https://andymatuschak.org/prompts/
-PRE_PROMPT = """
+PRE_PROMPT = f"""
     I want you to create a set of 10 spaced repetition cards based on some article or text so that I can use these cards to retain
     and remember important things from the article for longer.
     These cards have two sides: a front and a back. The front is a retrieval practice prompt and the back is the answer to that prompt.
+    Each card should be structured as: line 1 = ### Card <X>, line 2 = Front: <Prompt>, line 3 = Back: <Answer>
+    Make sure to include a delimiter like {CARD_DELIMITER} after each card.
+
     Here are a few guidelines to writing good retrieval practice prompt:
     1. Retrieval practice prompts should be focused. A question or answer involving too much detail will dull your concentration and stimulate incomplete retrievals, leaving some bulbs unlit. Unfocused questions also make it harder to check whether you remembered all parts of the answer and to note places where you differed. It’s usually best to focus on one detail at a time.
     2. Retrieval practice prompts should be precise about what they’re asking for. Vague questions will elicit vague answers, which won’t reliably light the bulbs you’re targeting.
@@ -22,6 +29,13 @@ PRE_PROMPT = """
 """
 MAX_TOKENS = 2048
 HF_TOKEN = os.environ.get("HF_TOKEN")
+CREATE_CARDS_URL = "https://app.mochi.cards/api/cards/"
+MOCHI_API_KEY = os.environ.get("MOCHI_API_KEY")
+ENCODED_CREDENTIALS = b64encode(bytes(f"{MOCHI_API_KEY}:", "utf-8")).decode("utf-8")
+REQUEST_HEADERS = {
+    "Authorization": f"Basic {ENCODED_CREDENTIALS}",
+    "Content-Type": "application/json",
+}
 
 
 class QwenChatbot:
@@ -46,12 +60,36 @@ class QwenChatbot:
             prompt=prompt,
             max_tokens=MAX_TOKENS,
         )
+        total_response = ""
         for chunk in response:
+            total_response += chunk.text
             print(chunk.text, end="", flush=True)
         print()
+        return total_response
 
-    def generate_mochi_cards(self, article_text: str) -> None:
-        pass
+    def generate_mochi_cards(self, llm_output: str, deck_id: str) -> None:
+        cards = llm_output.split(CARD_DELIMITER)
+        for card_num, card in enumerate(cards):
+            lines = card.split("\n")
+            print(f"CARD #{card_num}: {card}")
+            for line in lines:
+                print(f"LINE: {line}")
+                if line.startswith("Front: "):
+                    question = line.split("Front: ")[1]
+                elif line.startswith("Back: "):
+                    answer = line.split("Back: ")[1]
+            create_card_payload = {
+                "content": f"{question}\n---\n{answer}",
+                "deck-id": deck_id,
+                "review-reverse?": False,
+                "archived?": False,
+            }
+            post_response = requests.post(
+                CREATE_CARDS_URL, headers=REQUEST_HEADERS, json=create_card_payload
+            )
+            print(
+                f"Successfully created card {card_num} with response: {post_response}"
+            )
 
 
 # Example Usage
@@ -70,4 +108,7 @@ if __name__ == "__main__":
         semianalysis_content = f.read()
         user_input += semianalysis_content
     print(f"User: {user_input}")
-    chatbot.generate_response(user_input)
+    response = chatbot.generate_response(user_input)
+    print(f"RESPONSE: {response}")
+    ai_ml_deck_id = "ot8yzCzG"
+    chatbot.generate_mochi_cards(response, ai_ml_deck_id)
