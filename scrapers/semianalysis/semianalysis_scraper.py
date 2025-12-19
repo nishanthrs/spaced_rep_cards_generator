@@ -432,15 +432,16 @@ class SemiAnalysisScraper:
         print("Extracting text content...")
         text_content = self._extract_text_content(soup)
 
-        print("Extracting and downloading images...")
-        images = self._extract_images(soup, metadata.get("title", "untitled"))
+        # TODO: Don't extract and process images for now; will do that later once we add multimodal support
+        # print("Extracting and downloading images...")
+        # images = self._extract_images(soup, metadata.get("title", "untitled"))
 
         # Combine all data
         article_data = {
             "url": url,
             "metadata": metadata,
             "text_content": text_content,
-            "images": images,
+            # "images": images,
             "scrape_timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
 
@@ -451,7 +452,7 @@ class SemiAnalysisScraper:
         print(f"Scraping complete!")
         print(f"  - Title: {metadata.get('title', 'N/A')}")
         print(f"  - Text blocks: {len(text_content)}")
-        print(f"  - Images: {len(images)}")
+        # print(f"  - Images: {len(images)}")
         print(f"{'='*80}\n")
 
         return article_data
@@ -518,16 +519,16 @@ class SemiAnalysisScraper:
                     f.write(f"```\n{content}\n```\n\n")
 
             # Write image references
-            if article_data["images"]:
-                f.write("\n---\n\n## Images\n\n")
-                for img in article_data["images"]:
-                    f.write(f"### Image {img['index']}\n\n")
-                    if img.get("caption"):
-                        f.write(f"**Caption:** {img['caption']}\n\n")
-                    f.write(f"**URL:** {img['url']}\n\n")
-                    if img.get("local_path"):
-                        f.write(f"**Local file:** {img['local_path']}\n\n")
-                    f.write("\n")
+            # if article_data["images"]:
+            #     f.write("\n---\n\n## Images\n\n")
+            #     for img in article_data["images"]:
+            #         f.write(f"### Image {img['index']}\n\n")
+            #         if img.get("caption"):
+            #             f.write(f"**Caption:** {img['caption']}\n\n")
+            #         f.write(f"**URL:** {img['url']}\n\n")
+            #         if img.get("local_path"):
+            #             f.write(f"**Local file:** {img['local_path']}\n\n")
+            #         f.write("\n")
 
         print(f"Saved Markdown: {md_path}")
 

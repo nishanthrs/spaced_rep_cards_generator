@@ -1,5 +1,10 @@
+import os
+
+import torch
+from mlx_lm import generate, load, stream_generate
 from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer
 
+# Inspired by https://andymatuschak.org/prompts/
 PRE_PROMPT = """
     I want you to create a set of 10 spaced repetition cards based on some article or text so that I can use these cards to retain
     and remember important things from the article for longer.
@@ -15,46 +20,54 @@ PRE_PROMPT = """
     You should only use the article text to come up with good retrieval practice prompts and answers to those prompts. I will then use these to study and remember and apply this valuable information from the articles.
     Here is the article in markdown format:
 """
+MAX_TOKENS = 2048
+HF_TOKEN = os.environ.get("HF_TOKEN")
+
 
 class QwenChatbot:
-    def __init__(self, model_name="Qwen/Qwen3-30B-A3B"):
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(model_name)
-        self.history = []
+    def __init__(self, model_name: str):
+        if torch.backends.mps.is_available():
+            self.model, self.tokenizer = load(model_name)
+        else:
+            raise Exception(
+                "MPS backend not found; other backends not supported right now"
+            )
 
     def generate_response(self, user_input):
-        messages = self.history + [{"role": "user", "content": user_input}]
-
-        text = self.tokenizer.apply_chat_template(
+        messages = [{"role": "user", "content": user_input}]
+        prompt = self.tokenizer.apply_chat_template(
             messages,
-            tokenize=False,
             add_generation_prompt=True,
             enable_thinking=False,
         )
-
-        inputs = self.tokenizer(text, return_tensors="pt")
-        streamer = TextStreamer(self.tokenizer, skip_prompt=True)
-        response_ids = self.model.generate(**inputs, streamer=streamer, max_new_tokens=32768)[0][len(inputs.input_ids[0]):].tolist()
-        response = self.tokenizer.decode(response_ids, skip_special_tokens=True)
-
-        # Update history
-        self.history.append({"role": "user", "content": user_input})
-        self.history.append({"role": "assistant", "content": response})
-
-        return response
+        response = stream_generate(
+            self.model,
+            self.tokenizer,
+            prompt=prompt,
+            max_tokens=MAX_TOKENS,
+        )
+        for chunk in response:
+            print(chunk.text, end="", flush=True)
+        print()
 
     def generate_mochi_cards(self, article_text: str) -> None:
         pass
 
+
 # Example Usage
 if __name__ == "__main__":
-    chatbot = QwenChatbot("Qwen/Qwen3-8B")
-    # user_input_1 = "what are the best web scraping libraries out there?"
-    # print(f"User: {user_input_1}")
+    """
+    Model names:
+    1. Qwen/Qwen3-30B-A3B
+    2. Qwen/Qwen3-8B
+    3. MLX model names here: https://huggingface.co/collections/mlx-community/qwen3
+    """
+    chatbot = QwenChatbot("mlx-community/Qwen3-30B-A3B-4bit")
     user_input = PRE_PROMPT
-    with open("scraped_semianalysis_articles/text/The_Memory_Wall_Past,_Present,_and_Future_of_DRAM.md") as f:
+    with open(
+        "scraped_semianalysis_articles/text/The_Memory_Wall_Past,_Present,_and_Future_of_DRAM.md"
+    ) as f:
         semianalysis_content = f.read()
         user_input += semianalysis_content
     print(f"User: {user_input}")
-    response_1 = chatbot.generate_response(user_input)
-    print(f"Bot: {response_1}")
+    chatbot.generate_response(user_input)

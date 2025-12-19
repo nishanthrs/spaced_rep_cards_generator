@@ -61,3 +61,4 @@ python semianalysis_scraper.py
     - [ ] Run load tests
     - [ ] Write web server logic in Rust or Go
     *NOTE: Not expecting this tool to achieve significant scale or anything like that; this is purely out of curiosity and fun*
+- [ ] [P2] See if multimodal support can be added so that we can create richer cards that use image data as well
