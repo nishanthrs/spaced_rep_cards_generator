@@ -22,6 +22,8 @@ python3 -m venv .venv
 source .venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
+# Make sure env vars are set up
+source ~/.bashrc
 
 # Scrape specific blogs (hybrid approach)
 python generic_tech_blog_scraper.py
@@ -41,18 +43,15 @@ python semianalysis_scraper.py
 - [x] [P0] Scrape data from website so that tool can read data from the sources.
   - [x] Semianalysis articles (semianalysis_scraper.py)
   - [x] Random tech blogs (generic_tech_blog_scraper.py - hybrid approach with domain-specific extractors)
-- [ ] Use LLM (Claude or Qwen3) to generate spaced repetition cards.
+- [x] Use LLM (Claude or Qwen3) to generate spaced repetition cards.
   - [x] [P0] First have the tool generate the output.
   - [x] [P0] Optimize LLM inference on Mac M4 (takes way too long right now; one run at ~20 mins; impossible to test)
-  - [ ] [P0] After the data is verified, confirm that it can generate the spaced repetition cards in your Mochi account to the appropriate deck
-  - [ ] [P1] Deploy on GPU worker for faster token generation
+  - [x] [P0] After the data is verified, confirm that it can generate the spaced repetition cards in your Mochi account to the appropriate deck
+- [x] [P0] Build E2E script so that it can be executed in one CLI cmd
+- [ ] [P0] Verify that the spaced repetition cards are actually useful and testing you on knowledge that you want to retain!
 - [ ] Gradually expand sources of data to all your sources of consumption:
   - [ ] [P0] YT videos (yt-dlp)
   - [ ] [P1] Books (epub downloads)
-- [ ] [P1] See if you can structure the code into a generic data pipeline (e.g. Airflow)
-  - [ ] Step 1: input: link (article, tech blog, YT video); output: text content of link in markdown format
-  - [ ] Step 2: input: prompt, markdown content; output: spaced repetition card candidates
-  - [ ] Step 3: input: selected spaced repetition cards; output: mochi cards
 - [ ] [P2] Productize this tool to see if anyone would use it
   - [ ] Deploy on web server as API
   - [ ] Build a web app interface (Next.JS with Tailwind)
@@ -60,5 +59,7 @@ python semianalysis_scraper.py
   - [ ] Look into increasing performance of tool (latency first, then throughput)
     - [ ] Run load tests
     - [ ] Write web server logic in Rust or Go
+    - [ ] Deploy card generation on vLLM or SGLang or llama.cpp servers to increase throughput (and possibly latency) of service
+      - [ ] Deploy on GPU workers for faster token generation
     *NOTE: Not expecting this tool to achieve significant scale or anything like that; this is purely out of curiosity and fun*
 - [ ] [P2] See if multimodal support can be added so that we can create richer cards that use image data as well

@@ -15,28 +15,11 @@ request_headers = {
 
 deck_url = "https://app.mochi.cards/api/decks/"
 decks = requests.get(deck_url, headers=request_headers).json()["docs"]
+for deck in decks:
+    print(deck)
 
 cards_in_deck_url = "https://app.mochi.cards/api/cards/"
 business_cards = requests.get(
     cards_in_deck_url, params={"deck-id": "fRaP9Q3j"}, headers=request_headers
 ).json()["docs"][0]
 print(business_cards)
-
-create_card_url = "https://app.mochi.cards/api/cards/"
-question = "What is Mochi?"
-answer = "Spaced repetition software"
-test_card_payload = {
-    "content": f"{question}\n---\n{answer}",
-    "deck-id": "fRaP9Q3j",  # Business and Product Deck
-    "template-id": "8BtaEAXe",
-    "fields": {
-        "name": {"id": "name", "value": "Hello,"},
-        "JNEnw1e7": {"id": "JNEnw1e7", "value": "World!"},
-    },
-    "review-reverse?": False,
-    "archived?": False,
-    "pos": "6V",
-    "manual-tags": ["philosophy", "philosophy/aristotle"],
-}
-requests.post(create_card_url, headers=request_headers, json=test_card_payload)
-print("Successfully created a card")

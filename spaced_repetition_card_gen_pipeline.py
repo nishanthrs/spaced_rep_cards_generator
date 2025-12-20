@@ -1,12 +1,12 @@
-import os
-from base64 import b64encode
+import argparse
+from os import listdir
 
-import requests
+from scraper_utils.generic_tech_blog_scraper import UniversalTechBlogScraper
+from llm_utils.gen_mochi_cards import QwenChatbot
 
-import torch
-from mlx_lm import generate, load, stream_generate
-from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer
 
+SCRAPED_CONTENT_DIR = "scraper_utils/scraped_content"
+TECHNICAL_READINGS_DECKS = "eaUFr02Y"
 CARD_DELIMITER = "---"
 # Inspired by https://andymatuschak.org/prompts/
 PRE_PROMPT = f"""
@@ -23,92 +23,65 @@ PRE_PROMPT = f"""
     4. SuperMemo’s algorithms (also used by most other major systems) are tuned for 90% accuracy. Each review would likely have a larger impact on your memory if you targeted much lower accuracy numbers—see e.g. Carpenter et al, Using Spacing to Enhance Diverse Forms of Learning (2012). Higher accuracy targets trade efficiency for reliability.Retrieval practice prompts should be tractable. To avoid interference-driven churn and recurring annoyance in your review sessions, you should strive to write prompts which you can almost always answer correctly. This often means breaking the task down, or adding cues.
     5. Retrieval practice prompts should be effortful. It’s important that the prompt actually involves retrieving the answer from memory. You shouldn’t be able to trivially infer the answer. Cues are helpful, as we’ll discuss later—just don’t “give the answer away.” In fact, effort appears to be an important factor in the effects of retrieval practice.For more on the notion that difficult retrievals have a greater impact than easier retrievals, see the discussion in Bjork and Bjork, A New Theory of Disuse and an Old Theory of Stimulus Fluctuation (1992). Pyc and Rawson, Testing the retrieval effort hypothesis: Does greater difficulty correctly recalling information lead to higher levels of memory? (2009) offers some focused experimental tests of this theory, which they coin the “retrieval effort hypothesis.”
     That’s one motivation for spacing reviews out over time: if it’s too easy to recall the answer, retrieval practice has little effect.
+    6. ABOVE ALL, FOCUS ON GENERATING CARDS FOR REMEMBERING THE TECHNICAL DETAILS ON THE ARTICLE. NO QUESTIONS ABOUT THE AUTHORS, SOCIAL MEDIA, OR ANY OTHER IRRELEVANT CONTENT.
 
     You should only use the article text to come up with good retrieval practice prompts and answers to those prompts. I will then use these to study and remember and apply this valuable information from the articles.
     Here is the article in markdown format:
 """
-MAX_TOKENS = 2048
-HF_TOKEN = os.environ.get("HF_TOKEN")
-CREATE_CARDS_URL = "https://app.mochi.cards/api/cards/"
-MOCHI_API_KEY = os.environ.get("MOCHI_API_KEY")
-ENCODED_CREDENTIALS = b64encode(bytes(f"{MOCHI_API_KEY}:", "utf-8")).decode("utf-8")
-REQUEST_HEADERS = {
-    "Authorization": f"Basic {ENCODED_CREDENTIALS}",
-    "Content-Type": "application/json",
-}
 
-
-class QwenChatbot:
-    def __init__(self, model_name: str):
-        if torch.backends.mps.is_available():
-            self.model, self.tokenizer = load(model_name)
-        else:
-            raise Exception(
-                "MPS backend not found; other backends not supported right now"
-            )
-
-    def generate_response(self, user_input):
-        messages = [{"role": "user", "content": user_input}]
-        prompt = self.tokenizer.apply_chat_template(
-            messages,
-            add_generation_prompt=True,
-            enable_thinking=False,
-        )
-        response = stream_generate(
-            self.model,
-            self.tokenizer,
-            prompt=prompt,
-            max_tokens=MAX_TOKENS,
-        )
-        total_response = ""
-        for chunk in response:
-            total_response += chunk.text
-            print(chunk.text, end="", flush=True)
-        print()
-        return total_response
-
-    def generate_mochi_cards(self, llm_output: str, deck_id: str) -> None:
-        cards = llm_output.split(CARD_DELIMITER)
-        for card_num, card in enumerate(cards):
-            lines = card.split("\n")
-            print(f"CARD #{card_num}: {card}")
-            for line in lines:
-                print(f"LINE: {line}")
-                if line.startswith("Front: "):
-                    question = line.split("Front: ")[1]
-                elif line.startswith("Back: "):
-                    answer = line.split("Back: ")[1]
-            create_card_payload = {
-                "content": f"{question}\n---\n{answer}",
-                "deck-id": deck_id,
-                "review-reverse?": False,
-                "archived?": False,
-            }
-            post_response = requests.post(
-                CREATE_CARDS_URL, headers=REQUEST_HEADERS, json=create_card_payload
-            )
-            print(
-                f"Successfully created card {card_num} with response: {post_response}"
-            )
-
-
-# Example Usage
-if __name__ == "__main__":
+def main():
     """
     Model names:
     1. Qwen/Qwen3-30B-A3B
     2. Qwen/Qwen3-8B
     3. MLX model names here: https://huggingface.co/collections/mlx-community/qwen3
     """
+    # Setup CLI
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-u", "--urls", nargs="+", help="URLs to scrape")
+    args = parser.parse_args()
+    urls = args.urls
+
+    # Initialize scraper
+    scraper = UniversalTechBlogScraper(output_dir=SCRAPED_CONTENT_DIR)
+    # Scrape all URLs
+    results = scraper.scrape_multiple(urls)
+
+    # Scraper logs
+    print("\n" + "=" * 80)
+    print("SCRAPING SUMMARY")
+    print("=" * 80)
+    for result in results:
+        print(f"\nURL: {result.get('url')}")
+        print(f"  Status: {'✓ Success' if not result.get('error') else '✗ Failed'}")
+        if result.get("title"):
+            print(f"  Title: {result['title']}")
+        if result.get("extractor"):
+            print(f"  Extractor: {result['extractor']}")
+        if result.get("error"):
+            print(f"  Error: {result['error']}")
+
+    # Init LLM (on Mac for now), ingest scraped content from files, and generate Mochi cards
+    # TODO: For further customization and better generation of cards, add a power user arg that takes
+    # in further instructions to focus on specific sections of the article to generate cards for
     chatbot = QwenChatbot("mlx-community/Qwen3-30B-A3B-4bit")
-    user_input = PRE_PROMPT
-    with open(
-        "scraped_semianalysis_articles/text/The_Memory_Wall_Past,_Present,_and_Future_of_DRAM.md"
-    ) as f:
-        semianalysis_content = f.read()
-        user_input += semianalysis_content
-    print(f"User: {user_input}")
-    response = chatbot.generate_response(user_input)
-    print(f"RESPONSE: {response}")
-    ai_ml_deck_id = "ot8yzCzG"
-    chatbot.generate_mochi_cards(response, ai_ml_deck_id)
+    scraped_content_files = listdir(SCRAPED_CONTENT_DIR)
+    url_delimiter = "**Source:** "
+    for f in scraped_content_files:
+        user_input = PRE_PROMPT
+        with open(f"{SCRAPED_CONTENT_DIR}/{f}", "r") as f:
+            url = ""
+            for line in f:
+                if url_delimiter in line:
+                    url = line.split(url_delimiter)[1]
+                    break
+
+            article_content = f.read()
+            chatbot.generate_mochi_cards(
+                url,
+                PRE_PROMPT + article_content,
+                TECHNICAL_READINGS_DECKS
+            )
+
+if __name__ == "__main__":
+    main()

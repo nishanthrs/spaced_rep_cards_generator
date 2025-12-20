@@ -16,6 +16,7 @@ Requirements:
     pip install trafilatura newspaper3k requests beautifulsoup4 lxml
 """
 
+import argparse
 import json
 import re
 import time
@@ -369,7 +370,7 @@ class UniversalTechBlogScraper:
     - Easy to add new domain-specific extractors
     """
 
-    def __init__(self, output_dir: str = "scraped_tech_blogs"):
+    def __init__(self, output_dir: str = "scraped_content"):
         """Initialize the scraper with all available extractors."""
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
@@ -585,18 +586,13 @@ def main():
     """
     Demonstration of the universal scraper.
     """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-u", "--urls", nargs="+", help="URLs to scrape")
+    args = parser.parse_args()
+    urls = args.urls
+
     # Initialize scraper
-    scraper = UniversalTechBlogScraper(output_dir="scraped_tech_blogs")
-
-    # List of blog posts to scrape
-    urls = [
-        # Uber Engineering Blog
-        # "https://www.uber.com/blog/blazing-fast-olap-on-ubers-inventory-and-catalog-data-with-apache-pinot/?uclick_id=be28212b-50e6-43e0-a804-0a9cdd266ea6",
-        # Jane Street Blog
-        # "https://blog.janestreet.com/visualizing-piecewise-linear-neural-networks/",
-        "https://mmc.vc/research/state-of-agentic-ai-founders-edition/",
-    ]
-
+    scraper = UniversalTechBlogScraper(output_dir="scraped_content")
     # Scrape all URLs
     results = scraper.scrape_multiple(urls)
 
