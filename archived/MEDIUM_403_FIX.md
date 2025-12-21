@@ -46,10 +46,7 @@ Use a real browser controlled by automation. This is the most reliable approach.
 pip install selenium webdriver-manager
 ```
 
-**Usage:**
-```bash
-python medium_selenium_scraper.py "https://medium.com/pinterest-engineering/web-performance-regression-detection-part-2-of-3-9e0b9d35a11f"
-```
+**[Sample Script to Scrape WSJ Articles](https://github.com/philippe-heitzmann/WSJ_WebScraping_NLP/blob/master/scraping/scrape.py)**
 
 **Why it works:**
 - Uses a real Chrome browser (headless)
