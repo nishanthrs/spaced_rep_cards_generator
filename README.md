@@ -25,11 +25,14 @@ pip install -r requirements.txt
 # Make sure env vars are set up
 source ~/.bashrc
 
-# Scrape specific blogs (hybrid approach)
-python generic_tech_blog_scraper.py
-
-# Or use SemiAnalysis-only scraper
-python semianalysis_scraper.py
+# Run E2E script to scrape content, feed it to LLM, log spaced repetition card output to terminal, and create spaced repetition cards in Mochi
+python3 spaced_repetition_card_gen_pipeline.py -u "<url>"
+# Run E2E script without creating spaced repetition cards in Mochi
+python3 spaced_repetition_card_gen_pipeline.py -u "<url>" -nc
+# Add custom prompting to steer spaced repetition card generation (focus on only specific sections in article, generate card with code examples, etc)
+python3 spaced_repetition_card_gen_pipeline.py -u "<url>" -p "<custom_additional_prompt>"
+# Enable thinking mode (for potentially better cards, but cards seem to be of similar quality with non-thinking mode)
+python3 spaced_repetition_card_gen_pipeline.py -u "<url>" -t
 ```
 
 ## References

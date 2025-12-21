@@ -27,12 +27,12 @@ class QwenChatbot:
                 "MPS backend not found; other backends not supported right now"
             )
 
-    def _generate_response(self, context: str):
+    def generate_response(self, context: str, enable_thinking: bool = False):
         messages = [{"role": "user", "content": context}]
         prompt = self.tokenizer.apply_chat_template(
             messages,
             add_generation_prompt=True,
-            enable_thinking=False,
+            enable_thinking=enable_thinking,
         )
         response = stream_generate(
             self.model,
@@ -48,7 +48,7 @@ class QwenChatbot:
         print()
         return total_response
 
-    def generate_mochi_cards(self, url: str, context: str, deck_id: str) -> None:
+    def generate_mochi_cards(self, url: str, context: str, deck_id: str, enable_thinking: bool = False) -> None:
         response = self._generate_response(context)
         cards = response.split(CARD_DELIMITER)
         for card_num, card in enumerate(cards):

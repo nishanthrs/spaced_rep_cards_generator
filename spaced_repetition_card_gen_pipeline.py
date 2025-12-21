@@ -1,5 +1,5 @@
 import argparse
-from os import listdir
+from os import listdir, remove
 
 from scraper_utils.generic_tech_blog_scraper import UniversalTechBlogScraper
 from llm_utils.gen_mochi_cards import QwenChatbot
@@ -38,7 +38,10 @@ def main():
     """
     # Setup CLI
     parser = argparse.ArgumentParser()
-    parser.add_argument("-u", "--urls", nargs="+", help="URLs to scrape")
+    parser.add_argument("-u", "--urls", nargs="+", type=str, help="URLs to scrape", required=True)
+    parser.add_argument("-nc", "--no-cards", action="store_true")
+    parser.add_argument("-p", "--custom-additional-prompt", nargs=1, type=str, help="Custom additional prompt to steer spaced repetition card generator")
+    parser.add_argument("-t", "--enable-thinking", action="store_true")
     args = parser.parse_args()
     urls = args.urls
 
@@ -67,9 +70,9 @@ def main():
     chatbot = QwenChatbot("mlx-community/Qwen3-30B-A3B-4bit")
     scraped_content_files = listdir(SCRAPED_CONTENT_DIR)
     url_delimiter = "**Source:** "
-    for f in scraped_content_files:
-        user_input = PRE_PROMPT
-        with open(f"{SCRAPED_CONTENT_DIR}/{f}", "r") as f:
+    for filename in scraped_content_files:
+        filepath = f"{SCRAPED_CONTENT_DIR}/{filename}"
+        with open(filepath, "r") as f:
             url = ""
             for line in f:
                 if url_delimiter in line:
@@ -77,11 +80,19 @@ def main():
                     break
 
             article_content = f.read()
-            chatbot.generate_mochi_cards(
-                url,
-                PRE_PROMPT + article_content,
-                TECHNICAL_READINGS_DECKS
-            )
+            if args.no_cards:
+                chatbot.generate_response(
+                    PRE_PROMPT + article_content, args.enable_thinking
+                )
+            else:
+                chatbot.generate_mochi_cards(
+                    url,
+                    PRE_PROMPT + article_content,
+                    TECHNICAL_READINGS_DECKS,
+                    args.enable_thinking,
+                )
+
+        remove(filepath)
 
 if __name__ == "__main__":
     main()
