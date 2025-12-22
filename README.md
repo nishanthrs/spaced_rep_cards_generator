@@ -24,6 +24,9 @@ source .venv/bin/activate
 pip install -r requirements.txt
 # Make sure env vars are set up
 source ~/.bashrc
+# ALSO MAKE SURE TO INSTALL FFMPEG AND FFPROBE FOR VIDEO TRANSCRIPTION SUPPORT (yt_dlp)!
+# Mac: downloaded homebrew via `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"` and additional instructions from https://stackoverflow.com/questions/65619529/fixing-zsh-command-not-found-brew-installing-homebrew and `source ~/.bashrc` and `brew install ffmpeg`
+# ALSO MAKE SURE CMAKE IS INSTALLED FOR WHISPER.CPP SUPPORT!
 
 # Run E2E script to scrape content, feed it to LLM, log spaced repetition card output to terminal, and create spaced repetition cards in Mochi
 python3 spaced_repetition_card_gen_pipeline.py -u "<url>"
@@ -33,6 +36,8 @@ python3 spaced_repetition_card_gen_pipeline.py -u "<url>" -nc
 python3 spaced_repetition_card_gen_pipeline.py -u "<url>" -p "<custom_additional_prompt>"
 # Enable thinking mode (for potentially better cards, but cards seem to be of similar quality with non-thinking mode)
 python3 spaced_repetition_card_gen_pipeline.py -u "<url>" -t
+
+NOTE: Models are stored ~/.cache/huggingface/hub
 ```
 
 ## References
