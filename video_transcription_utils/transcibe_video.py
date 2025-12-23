@@ -22,20 +22,17 @@ class VideoTranscriptionUtils:
         self.whisper_model_name = whisper_model_name
 
     def _find_file(self, ext: str) -> Optional[str]:
-        """Find first file in curr dir with specific extension"""
         for file in list(filter(lambda f: os.path.isfile(f), os.listdir("."))):
             if file.endswith(ext):
                 return file
         return None
 
     def _remove_file(self, ext: str) -> None:
-        """Remove all files in curr dir of specific extension"""
         for file in list(filter(lambda f: os.path.isfile(f), os.listdir("."))):
             if file.endswith(ext):
                 os.remove(file)
 
     def extract_audio_and_metadata_from_video(self, yt_url: str) -> str:
-        """Download YT video as audio file"""
         try:
             result = subprocess.run(
                 ["which", "ffmpeg"],
@@ -51,7 +48,7 @@ class VideoTranscriptionUtils:
         yt_dlp_opts = {
             "format": "wav/bestaudio/best",
             "postprocessors": [
-                {  # Extract audio using ffmpeg
+                {
                     "key": "FFmpegExtractAudio",
                     "preferredcodec": "wav",
                 }
@@ -76,7 +73,6 @@ class VideoTranscriptionUtils:
         return (audio_filepath, metadata_filepath)
 
     def transcribe_video_via_mlx_whisper(self, audio_filepath: str) -> None:
-        """Transcribe audio from audio_filepath"""
         transcription_output = mlx_whisper.transcribe(
             audio_filepath,
             path_or_hf_repo=self.whisper_model_name,
@@ -87,7 +83,10 @@ class VideoTranscriptionUtils:
     def transcribe_video_via_whisper_cpp(
         self, audio_filepath: str
     ) -> TranscriptionChunks:
-        # TODO: Need to do setup work of checking if whisper.cpp is installed, installing it if it's not, cd'ing into the right directory, etc.
+        """TODO: There's a lot of installation and setup work to get this running.
+        Need to do setup work of checking if whisper.cpp is installed, installing it if it's not,
+        installing dependencies (ffmpeg, ffmprobe, cmake), cd'ing into the right directory, etc.
+        """
         subprocess.run(
             [
                 "/Users/nishanthrs/SideProjects/whisper.cpp/build/bin/whisper-cli",
@@ -115,14 +114,8 @@ def main():
     args = parser.parse_args()
     url = args.url
 
-    # --------------------------------------------------------
-    # MLX Whisper
-    # Perf: currently takes ~120s for 115 mins video
-    # --------------------------------------------------------
-
-    # Download YT video as audio file and metadata as JSON
     video_transcription_utils = VideoTranscriptionUtils(
-        whisper_model_name="mlx-community/whisper-turbo"
+        whisper_model_name="mlx-community/whisper-large-v3-turbo"
     )
     audio_filepath, metadata_filepath = (
         video_transcription_utils.extract_audio_and_metadata_from_video(url)
@@ -133,24 +126,6 @@ def main():
     video_transcription_utils.transcribe_video_via_mlx_whisper(audio_filepath)
     end_time = time.time()
     print(f"Time taken for MLX whisper: {end_time - start_time} seconds")
-
-    # -------------------------------------------------------------------------
-    # Whisper.cpp
-    # Perf: currently takes ~192s for 115 mins video
-    # TODO: Look into CoreML optimization for whisper.cpp; could make it faster
-    # -------------------------------------------------------------------------
-
-    # video_transcription_utils = VideoTranscriptionUtils(
-    #     whisper_model_name="large-v3-turbo"
-    # )
-    # audio_filepath, metadata_filepath = (
-    #     video_transcription_utils.extract_audio_and_metadata_from_video(url)
-    # )
-    # start_time_2 = time.time()
-    # video_transcription_utils.transcribe_video_via_whisper_cpp(audio_filepath)
-    # end_time_2 = time.time()
-    # print(f"Time taken for whisper.cpp: {end_time_2 - start_time_2} seconds")
-
 
 if __name__ == "__main__":
     main()

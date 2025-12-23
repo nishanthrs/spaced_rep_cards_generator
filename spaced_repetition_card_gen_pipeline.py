@@ -29,6 +29,7 @@ PRE_PROMPT = f"""
     Here is the article in markdown format:
 """
 
+
 def main():
     """
     Model names:
@@ -45,12 +46,9 @@ def main():
     args = parser.parse_args()
     urls = args.urls
 
-    # Initialize scraper
     scraper = UniversalTechBlogScraper(output_dir=SCRAPED_CONTENT_DIR)
-    # Scrape all URLs
     results = scraper.scrape_multiple(urls)
 
-    # Scraper logs
     print("\n" + "=" * 80)
     print("SCRAPING SUMMARY")
     print("=" * 80)
@@ -64,9 +62,6 @@ def main():
         if result.get("error"):
             print(f"  Error: {result['error']}")
 
-    # Init LLM (on Mac for now), ingest scraped content from files, and generate Mochi cards
-    # TODO: For further customization and better generation of cards, add a power user arg that takes
-    # in further instructions to focus on specific sections of the article to generate cards for
     chatbot = QwenChatbot("mlx-community/Qwen3-30B-A3B-4bit")
     scraped_content_files = listdir(SCRAPED_CONTENT_DIR)
     url_delimiter = "**Source:** "
