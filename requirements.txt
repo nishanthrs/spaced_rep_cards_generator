@@ -13,6 +13,3 @@ mlx
 mlx-lm
 mlx_whisper
 yt-dlp
-ane_transformers
-openai-whisper
-coremltools

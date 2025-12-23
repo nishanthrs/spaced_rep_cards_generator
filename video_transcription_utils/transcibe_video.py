@@ -1,7 +1,6 @@
 import argparse
 import os
 import subprocess
-import time
 from typing import Any, Dict, List, Optional
 
 import mlx_whisper
@@ -122,10 +121,8 @@ def main():
     )
 
     # Transcribe audio from audio_filepath
-    start_time = time.time()
     video_transcription_utils.transcribe_video_via_mlx_whisper(audio_filepath)
-    end_time = time.time()
-    print(f"Time taken for MLX whisper: {end_time - start_time} seconds")
+
 
 if __name__ == "__main__":
     main()

@@ -1,4 +1,4 @@
-# Whisper Inference Framework Comparisons
+# ASR Inference Framework Comparisons
 
 ## [Mac] [mlx-whisper](https://github.com/ml-explore/mlx-examples/tree/main/whisper)
 * The superior model with fastest inference speed on Apple Silicon
@@ -19,4 +19,7 @@
 *TODO*
 
 ## [TPU] [whisper JAX](https://github.com/sanchit-gandhi/whisper-jax)
+*TODO*
+
+## [GPU] [nvidia-parakeet-tdt](https://huggingface.co/nvidia/parakeet-tdt-0.6b-v2)
 *TODO*
