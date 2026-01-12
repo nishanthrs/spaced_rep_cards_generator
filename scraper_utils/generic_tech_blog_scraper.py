@@ -17,12 +17,11 @@ Requirements:
 """
 
 import argparse
-import json
 import re
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 from urllib.parse import urlparse
 
 import requests
@@ -446,24 +445,17 @@ class UniversalTechBlogScraper:
         print(f"Scraping: {url}")
         print(f"{'='*80}\n")
 
-        # Fetch the page
-        try:
-            html, soup = self._fetch_page(url)
-        except Exception as e:
-            print(f"Error fetching page: {e}")
-            return {"url": url, "error": str(e)}
-
-        # Select appropriate extractor
+        html, soup = self._fetch_page(url)
         extractor = self._get_extractor(url)
         print(f"Using extractor: {extractor.__class__.__name__}")
 
-        # Extract content
         try:
             data = extractor.extract(url, soup, html)
             data["scrape_timestamp"] = time.strftime("%Y-%m-%d %H:%M:%S")
 
             # Save the results
-            self._save_data(data)
+            content_path = self._save_data(data)
+            data["content_path"] = content_path
 
             # Print summary
             print(f"\n{'='*80}")
@@ -539,6 +531,7 @@ class UniversalTechBlogScraper:
                     f.write("\n")
 
         print(f"Saved Markdown: {md_path}")
+        return md_path
 
     def scrape_multiple(self, urls: List[str]) -> List[Dict]:
         """

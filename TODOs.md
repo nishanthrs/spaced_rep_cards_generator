@@ -10,7 +10,8 @@
 - [x] [P0] Build E2E script so that it can be executed in one CLI cmd
 - [x] [P0] Verify that the spaced repetition cards are actually useful and testing you on knowledge that you want to retain!
 - [ ] Gradually expand sources of data to all your sources of consumption:
-  - [ ] [P0] YT videos (yt-dlp)
+  - [x] [P0] Tech blogs
+  - [x] [P0] YT videos (yt-dlp)
   - [ ] [P0] News articles with required auth / strong bot protections (e.g. Medium, WSJ, Financial Times, )
     - **[Sample Script to Scrape WSJ Articles](https://github.com/philippe-heitzmann/WSJ_WebScraping_NLP/blob/master/scraping/scrape.py)**
     - Also explore options by scraping articles from WaybackMachine, archive.is, archive.ph, etc
@@ -35,3 +36,7 @@
     *NOTE: Not expecting this tool to achieve significant scale or anything like that; this is purely out of curiosity and fun*
 - [ ] [P2] See if multimodal support can be added so that we can create richer cards that ask and answer questions about image data as well
 - [ ] [P2] Extend this tool to support content Q&A (talk-to-article) with citations
+  - [ ] Extend sources to an entire website domain (e.g. resolve.ai)
+    - [ ] Must be able to traverse (BFS, DFS) all the pages in the domain
+  - Example Usecase: "Based on all the knowledge in resolve.ai, how would i build a knowledge graph for an agent to root-cause performance and capacity regressions?"
+    - *Basically, consume an entire startup website's knowledge and use AI reasoning to answer a sophisticated question about how/why a startup accomplishes something.*

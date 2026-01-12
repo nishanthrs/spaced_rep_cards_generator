@@ -1,11 +1,11 @@
 import argparse
-from os import listdir, remove
+import os
 
 from scraper_utils.generic_tech_blog_scraper import UniversalTechBlogScraper
 from llm_utils.gen_mochi_cards import QwenChatbot
+from video_transcription_utils.transcribe_video import VideoTranscriptionUtils
 
-
-SCRAPED_CONTENT_DIR = "scraper_utils/scraped_content"
+CONTENT_DIR = "tmp/scraped_content"
 TECHNICAL_READINGS_DECKS = "eaUFr02Y"
 CARD_DELIMITER = "---"
 # Inspired by https://andymatuschak.org/prompts/
@@ -23,10 +23,12 @@ PRE_PROMPT = f"""
     4. SuperMemo’s algorithms (also used by most other major systems) are tuned for 90% accuracy. Each review would likely have a larger impact on your memory if you targeted much lower accuracy numbers—see e.g. Carpenter et al, Using Spacing to Enhance Diverse Forms of Learning (2012). Higher accuracy targets trade efficiency for reliability.Retrieval practice prompts should be tractable. To avoid interference-driven churn and recurring annoyance in your review sessions, you should strive to write prompts which you can almost always answer correctly. This often means breaking the task down, or adding cues.
     5. Retrieval practice prompts should be effortful. It’s important that the prompt actually involves retrieving the answer from memory. You shouldn’t be able to trivially infer the answer. Cues are helpful, as we’ll discuss later—just don’t “give the answer away.” In fact, effort appears to be an important factor in the effects of retrieval practice.For more on the notion that difficult retrievals have a greater impact than easier retrievals, see the discussion in Bjork and Bjork, A New Theory of Disuse and an Old Theory of Stimulus Fluctuation (1992). Pyc and Rawson, Testing the retrieval effort hypothesis: Does greater difficulty correctly recalling information lead to higher levels of memory? (2009) offers some focused experimental tests of this theory, which they coin the “retrieval effort hypothesis.”
     That’s one motivation for spacing reviews out over time: if it’s too easy to recall the answer, retrieval practice has little effect.
-    6. ABOVE ALL, FOCUS ON GENERATING CARDS FOR REMEMBERING THE TECHNICAL DETAILS ON THE ARTICLE. NO QUESTIONS ABOUT THE AUTHORS, SOCIAL MEDIA, OR ANY OTHER IRRELEVANT CONTENT.
+    6. ABOVE ALL, FOCUS ON GENERATING CARDS FOR REMEMBERING THE TECHNICAL DETAILS ON THE ARTICLE, SPECIFICALLY THE PROBLEM AND DETAILS OF HOW THAT PROBLEM IS SOLVED THROUGH TECHNICAL MEANS.
+    FOCUS LESS ON SPECIFIC STATISTICS AND FIGURES AND MORE ON GENERAL CONCEPTS AND WHY THEY ARE IMPORTANT AND HOW THEY ARE USED TO SOLVE SPECIFIC PROBLEMS.
+    NO QUESTIONS ABOUT THE AUTHORS, SOCIAL MEDIA, OR ANY OTHER IRRELEVANT CONTENT.
 
     You should only use the article text to come up with good retrieval practice prompts and answers to those prompts. I will then use these to study and remember and apply this valuable information from the articles.
-    Here is the article in markdown format:
+    Here is the article in markdown or text format:
 """
 
 
@@ -39,20 +41,42 @@ def main():
     """
     # Setup CLI
     parser = argparse.ArgumentParser()
-    parser.add_argument("-u", "--urls", nargs="+", type=str, help="URLs to scrape", required=True)
+    parser.add_argument(
+        "-u", "--url", type=str, help="URL to scrape", required=True
+    )
     parser.add_argument("-nc", "--no-cards", action="store_true")
-    parser.add_argument("-p", "--custom-additional-prompt", nargs=1, type=str, help="Custom additional prompt to steer spaced repetition card generator")
+    parser.add_argument(
+        "-p",
+        "--custom-additional-prompt",
+        nargs=1,
+        type=str,
+        help="Custom additional prompt to steer spaced repetition card generator",
+    )
     parser.add_argument("-t", "--enable-thinking", action="store_true")
     args = parser.parse_args()
-    urls = args.urls
+    url = args.url
 
-    scraper = UniversalTechBlogScraper(output_dir=SCRAPED_CONTENT_DIR)
-    results = scraper.scrape_multiple(urls)
+    if not os.path.exists(CONTENT_DIR):
+        os.makedirs(CONTENT_DIR)
 
-    print("\n" + "=" * 80)
-    print("SCRAPING SUMMARY")
-    print("=" * 80)
-    for result in results:
+    if "youtube" in url:
+        print("Youtube URL detected. Transcribing video...")
+        video_transcription_utils = VideoTranscriptionUtils(
+            whisper_model_name="mlx-community/whisper-large-v3-turbo"
+        )
+        audio_filepath, metadata_filepath = (
+            video_transcription_utils.extract_audio_and_metadata_from_video(url)
+        )
+        # Transcribe audio from audio_filepath
+        scraped_content_filepath = video_transcription_utils.transcribe_video_via_mlx_whisper(audio_filepath, CONTENT_DIR)
+    else:
+        # Scrape all URLs for content
+        scraper = UniversalTechBlogScraper(output_dir=CONTENT_DIR)
+        result = scraper.scrape(url)
+
+        print("\n" + "=" * 80)
+        print("SCRAPING SUMMARY")
+        print("=" * 80)
         print(f"\nURL: {result.get('url')}")
         print(f"  Status: {'✓ Success' if not result.get('error') else '✗ Failed'}")
         if result.get("title"):
@@ -62,32 +86,26 @@ def main():
         if result.get("error"):
             print(f"  Error: {result['error']}")
 
+        scraped_content_filepath = result["content_path"]
+
+    # Use LLM to take text as context to generate spaced repetition cards
     chatbot = QwenChatbot("mlx-community/Qwen3-30B-A3B-4bit")
-    scraped_content_files = listdir(SCRAPED_CONTENT_DIR)
-    url_delimiter = "**Source:** "
-    for filename in scraped_content_files:
-        filepath = f"{SCRAPED_CONTENT_DIR}/{filename}"
-        with open(filepath, "r") as f:
-            url = ""
-            for line in f:
-                if url_delimiter in line:
-                    url = line.split(url_delimiter)[1]
-                    break
+    with open(scraped_content_filepath, "r") as f:
+        article_content = f.read()
+        if args.no_cards:
+            chatbot.generate_response(
+                PRE_PROMPT + article_content, args.enable_thinking
+            )
+        else:
+            chatbot.generate_mochi_cards(
+                url,
+                PRE_PROMPT + article_content,
+                TECHNICAL_READINGS_DECKS,
+                args.enable_thinking,
+            )
 
-            article_content = f.read()
-            if args.no_cards:
-                chatbot.generate_response(
-                    PRE_PROMPT + article_content, args.enable_thinking
-                )
-            else:
-                chatbot.generate_mochi_cards(
-                    url,
-                    PRE_PROMPT + article_content,
-                    TECHNICAL_READINGS_DECKS,
-                    args.enable_thinking,
-                )
+    os.remove(scraped_content_filepath)
 
-        remove(filepath)
 
 if __name__ == "__main__":
     main()
