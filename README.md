@@ -7,12 +7,10 @@ I consume so much valuable information daily, but I find it frustrating that I c
 
 ## Web Scrapers
 
-Two scraping approaches are available:
-
-1. **`semianalysis_scraper.py`** - Substack-specific scraper optimized for SemiAnalysis articles
-2. **`generic_tech_blog_scraper.py`** - Universal scraper with domain-specific extractors + generic fallback (RECOMMENDED)
-
-See `SCRAPER_COMPARISON.md` for detailed comparison.
+I need to be able to extract content from all kinds of online sources: articles, videos, books (epub files), podcasts, etc. Here are all the currently supported scrapers:
+1. **`generic_tech_blog_scraper.py`** - Universal scraper for any web pages with domain-specific extractors + generic fallback
+2. **`scrape_epub.py`** - Simple scraper for EPUB files (books)
+3. **`transcribe_video.py`** - Scraper and transcriber for YouTube videos
 
 ### Quick Start
 
@@ -36,8 +34,10 @@ python3 spaced_repetition_card_gen_pipeline.py -u "<url>" -nc
 python3 spaced_repetition_card_gen_pipeline.py -u "<url>" -p "<custom_additional_prompt>"
 # Enable thinking mode (for potentially better cards, but cards seem to be of similar quality with non-thinking mode)
 python3 spaced_repetition_card_gen_pipeline.py -u "<url>" -t
+# Support epub, txt, and MD files
+python3 spaced_repetition_card_gen_pipeline.py -f "<filepath>" -t -n 20
 
-NOTE: Models are stored ~/.cache/huggingface/hub
+NOTE: Models are stored ~/.cache/huggingface/hub. Model configs are stored in ~/.cache/huggingface/hub/<model_name>/snapshots/<specific_snapshot>/config.json.
 ```
 
 ## References

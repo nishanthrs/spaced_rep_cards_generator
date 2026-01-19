@@ -13,3 +13,5 @@ mlx
 mlx-lm
 mlx_whisper
 yt-dlp
+ebooklib
+tiktoken

@@ -4,10 +4,12 @@ import os
 from scraper_utils.generic_tech_blog_scraper import UniversalTechBlogScraper
 from llm_utils.gen_mochi_cards import QwenChatbot
 from video_transcription_utils.transcribe_video import VideoTranscriptionUtils
+from epub_utils.scrape_epub import EPubScraper
 
 CONTENT_DIR = "tmp/scraped_content"
 TECHNICAL_READINGS_DECKS = "eaUFr02Y"
 CARD_DELIMITER = "---"
+DEFAULT_NUM_CARDS = 10
 
 
 def gen_guidelines_on_card_gen(num_cards: int) -> str:
@@ -45,7 +47,10 @@ def main():
     # Setup CLI
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-u", "--url", type=str, help="URL to scrape", required=True
+        "-u", "--url", type=str, help="URL to scrape",
+    )
+    parser.add_argument(
+        "-f", "--file", type=str, help="Path of file to scrape",
     )
     parser.add_argument(
         "-n",
@@ -53,7 +58,7 @@ def main():
         type=int,
         help="Number of spaced repetition cards to generate for this URL",
         required=False,
-        default=10,
+        default=DEFAULT_NUM_CARDS,
     )
     parser.add_argument(
         "-nc",
@@ -70,53 +75,67 @@ def main():
     parser.add_argument("-t", "--enable-thinking", action="store_true")
     args = parser.parse_args()
     url = args.url
+    filepath = args.file
     num_cards = args.num_cards
 
     if not os.path.exists(CONTENT_DIR):
         os.makedirs(CONTENT_DIR)
 
-    if "youtube" in url:
-        print("Youtube URL detected. Transcribing video...")
-        video_transcription_utils = VideoTranscriptionUtils(
-            whisper_model_name="mlx-community/whisper-large-v3-turbo"
-        )
-        audio_filepath, metadata_filepath = (
-            video_transcription_utils.extract_audio_and_metadata_from_video(url)
-        )
-        # Transcribe audio from audio_filepath
-        scraped_content_filepath = video_transcription_utils.transcribe_video_via_mlx_whisper(audio_filepath, CONTENT_DIR)
+    if url is not None:
+        if "youtube" in url:
+            print("Youtube URL detected. Transcribing video...")
+            video_transcription_utils = VideoTranscriptionUtils(
+                whisper_model_name="mlx-community/whisper-large-v3-turbo"
+            )
+            audio_filepath, metadata_filepath = (
+                video_transcription_utils.extract_audio_and_metadata_from_video(url)
+            )
+            # Transcribe audio from audio_filepath
+            scraped_content_filepath = video_transcription_utils.transcribe_video_via_mlx_whisper(audio_filepath, CONTENT_DIR)
+        else:
+            scraper = UniversalTechBlogScraper(output_dir=CONTENT_DIR)
+            result = scraper.scrape(url)
+
+            print("\n" + "=" * 80)
+            print("SCRAPING SUMMARY")
+            print("=" * 80)
+            print(f"\nURL: {result.get('url')}")
+            print(f"  Status: {'✓ Success' if not result.get('error') else '✗ Failed'}")
+            if result.get("title"):
+                print(f"  Title: {result['title']}")
+            if result.get("extractor"):
+                print(f"  Extractor: {result['extractor']}")
+            if result.get("error"):
+                print(f"  Error: {result['error']}")
+
+            scraped_content_filepath = result["content_path"]
     else:
-        # Scrape all URLs for content
-        scraper = UniversalTechBlogScraper(output_dir=CONTENT_DIR)
-        result = scraper.scrape(url)
-
-        print("\n" + "=" * 80)
-        print("SCRAPING SUMMARY")
-        print("=" * 80)
-        print(f"\nURL: {result.get('url')}")
-        print(f"  Status: {'✓ Success' if not result.get('error') else '✗ Failed'}")
-        if result.get("title"):
-            print(f"  Title: {result['title']}")
-        if result.get("extractor"):
-            print(f"  Extractor: {result['extractor']}")
-        if result.get("error"):
-            print(f"  Error: {result['error']}")
-
-        scraped_content_filepath = result["content_path"]
+        if os.path.isfile(filepath):
+            file_ext = os.path.splitext(filepath)[-1]
+            match file_ext:
+                case ".epub":
+                    epub_scraper = EPubScraper()
+                    scraped_content_filepath = epub_scraper.extract_text_from_epub(filepath)
+                case ".txt" | ".md":
+                    scraped_content_filepath = filepath
+                case _:
+                    raise Exception(f"{file_ext} not supported to scrape")
+        else:
+            raise Exception(f"{filepath} not a valid file")
 
     # Use LLM to take text as context to generate spaced repetition cards
     pre_prompt = gen_guidelines_on_card_gen(num_cards)
-    chatbot = QwenChatbot("mlx-community/Qwen3-30B-A3B-4bit")
+    chatbot = QwenChatbot("mlx-community/Qwen3-30B-A3B-4bit", num_cards)
     with open(scraped_content_filepath, "r") as f:
-        article_content = f.read()
+        content = f.read()
         if args.no_cards:
-            chatbot.generate_response(
-                pre_prompt + article_content, args.enable_thinking
+            chatbot.generate_spaced_rep_card_drafts(
+                pre_prompt + content, args.enable_thinking
             )
         else:
             chatbot.generate_mochi_cards(
                 url,
-                pre_prompt + article_content,
+                pre_prompt + content,
                 TECHNICAL_READINGS_DECKS,
                 args.enable_thinking,
             )

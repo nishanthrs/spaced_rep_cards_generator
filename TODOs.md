@@ -12,11 +12,12 @@
 - [ ] Gradually expand sources of data to all your sources of consumption:
   - [x] [P0] Tech blogs
   - [x] [P0] YT videos (yt-dlp)
-  - [ ] [P0] News articles with required auth / strong bot protections (e.g. Medium, WSJ, Financial Times, )
+  - [ ] [P0] Books (EPUB downloads)
+    - [ ] Books can be huge with a ton of tokens, so have to build some context splitting functionality (and parallelize it with GPU server like vLLM for lower latency) to get this to work with model's limited context window.
+  - [ ] [P0] Podcasts
+  - [ ] [P1] News articles with required auth / strong bot protections (e.g. Medium, WSJ, Financial Times, )
     - **[Sample Script to Scrape WSJ Articles](https://github.com/philippe-heitzmann/WSJ_WebScraping_NLP/blob/master/scraping/scrape.py)**
     - Also explore options by scraping articles from WaybackMachine, archive.is, archive.ph, etc
-  - [ ] [P1] Books (EPUB downloads)
-    - This one might be a big harder to scrape. See if Anna's Archive or Libgen has an API or if we can use selenium to download EPUB files.
 - [ ] [P1] Make AI tools platform-agnostic; get it working on GPUs and Macs using a simple CLI flag from E2E script: spaced_repetition_card_gen_pipeline.py
   - [ ] Whisper ASR model that transcribe YT videos
     - [ ] Nvidia GPU
@@ -40,3 +41,4 @@
     - [ ] Must be able to traverse (BFS, DFS) all the pages in the domain
   - Example Usecase: "Based on all the knowledge in resolve.ai, how would i build a knowledge graph for an agent to root-cause performance and capacity regressions?"
     - *Basically, consume an entire startup website's knowledge and use AI reasoning to answer a sophisticated question about how/why a startup accomplishes something.*
+  - *NOTE: This should probably be a separate application. Let's keep this tool simple.*
