@@ -42,3 +42,14 @@
   - Example Usecase: "Based on all the knowledge in resolve.ai, how would i build a knowledge graph for an agent to root-cause performance and capacity regressions?"
     - *Basically, consume an entire startup website's knowledge and use AI reasoning to answer a sophisticated question about how/why a startup accomplishes something.*
   - *NOTE: This should probably be a separate application. Let's keep this tool simple.*
+- [ ] [P2] Convert this whole tool into an AI agent command/skill.
+  - Given a user prompt or command like /spaced_rep_card_gen generate some cards that will quiz my understanding on this video: <youtube_url>
+  - AI agent will execute a computation/task graph that defines how to
+  - Computation graph:
+    - ```mermaid
+      graph TD
+        Root[Input/Prompt/Query] -->|Videos| yt-dlp[yt-dlp Scraping]
+        Root[Input/Prompt/Query] -->|Books| EPub[Epub Scraping]
+        Root[Input/Prompt/Query] -->|Web Pages| Website[Website Scraping]
+    ```
+  - Not really any practical use for doing this, but I'm imagining breaking up this project into several smaller tools (web scraping, yt-dlp downloading, LLM inference, spaced repetition card generation, etc) that the AI agent can access. With a computation graph as a guide/orchestrator, the agent can leverage these tools to execute various flexible commands (that may not necessarily be related to spaced repetition cards). This is just a fun idea to explore and could take automation to the next level.

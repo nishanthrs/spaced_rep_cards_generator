@@ -124,18 +124,19 @@ def main():
             raise Exception(f"{filepath} not a valid file")
 
     # Use LLM to take text as context to generate spaced repetition cards
-    pre_prompt = gen_guidelines_on_card_gen(num_cards)
+    card_gen_instructions = gen_guidelines_on_card_gen(num_cards)
     chatbot = QwenChatbot("mlx-community/Qwen3-30B-A3B-4bit", num_cards)
     with open(scraped_content_filepath, "r") as f:
         content = f.read()
         if args.no_cards:
             chatbot.generate_spaced_rep_card_drafts(
-                pre_prompt + content, args.enable_thinking
+                card_gen_instructions, content, args.enable_thinking
             )
         else:
             chatbot.generate_mochi_cards(
                 url,
-                pre_prompt + content,
+                card_gen_instructions,
+                content,
                 TECHNICAL_READINGS_DECKS,
                 args.enable_thinking,
             )
